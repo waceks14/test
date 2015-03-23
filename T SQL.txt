@@ -1,0 +1,85 @@
+ZAD 1
+
+create procedure Hire_emp
+@new_first_name varchar(25),@new_last_name varchar(30),@new_birth_date date, @new_gender char(1),@new_email varchar(40), @manager_id int, @department_name varchar(50)
+AS
+BEGIN
+
+INSERT INTO Employee
+VALUES (@new_first_name,@new_last_name,@new_birth_date,@new_gender,@new_email,@manager_id,@department_name)
+
+INSERT into Employment
+values((select e.emp_id from Employee as e where @new_email=e.email),'1','11','1',GETDATE(),NULL);
+
+
+insert into Task
+values ('init_task',(select ep.e_id from Employment as ep join Employee as e on ep.emp_id=e.emp_id where @new_email=e.email)  ,GETDATE(),GETDATE(),GETDATE(),'NULL');
+
+END;
+
+
+
+
+_______________________________________________________________________
+ZAD 2
+
+create procedure RemoweEmployer
+@emp_id int 
+AS
+BEGIN
+IF EXISTS( SELECT 1
+ FROM Employment
+ WHERE e_id=@emp_id
+ ) BEGIN
+
+Update Employment set end_date=GETDATE() where e_id=@emp_id
+Delete from Task where e_id=@emp_id
+
+
+ END
+ ELSE
+
+Print 'Pracownik nie istnieje'
+
+END;
+Go
+________________________________________________________________________
+
+ZAD 3
+
+
+
+____________________________________________________________________________
+ZAD 4
+
+create function Counter_emp(@id_oddzialu int) returns int 
+with execute as caller
+as
+begin
+declare @liczba_pracownikow varchar(max)
+select @liczba_pracownikow = COUNT(e.emp_id)
+from Employment as e join Department as d on d.dept_id = e.dept_id
+where @id_oddzialu = e.dept_id
+return @liczba_pracownikow
+end;
+go
+
+____________________________________________________________________________
+
+ZAD 5
+
+create function Display()
+returns @tabela table(first_name varchar(50), name varchar(50), salary money,start_date date, end_date date, p_id int)
+as
+begin
+insert into @tabela
+select e.first_name,d.name,ep.salary, ep.start_date, ep.end_date, ep.p_id
+from Employee as e join Employment as ep on e.emp_id = ep.emp_id join Department as d on ep.dept_id = d.dept_id
+where end_date is not null
+return 
+end;
+go
+
+----
+
+select * from Display()
